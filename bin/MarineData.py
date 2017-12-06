@@ -10,6 +10,17 @@ import data.model
 from pandas import Series,DataFrame
 import numpy as np
 import pandas as pd
+import datetime
+from enum import Enum
+
+class DataType(Enum):
+    '''
+    数据类型的枚举
+    0：气象
+    1：水文
+    '''
+    Meteorology=0
+    Hydrology=1
 
 class ReadTimeData:
     '''
@@ -52,9 +63,97 @@ class PerclockData:
             result= pd.read_table(targetpath,sep='\s+')
         pass
 
+    def getbetweenDays(self,start, finish):
+        date_list = []
+        start_date = datetime.datetime.strptime(start, '%Y-%m-%d %H:%M:%S')
+        finish_date = datetime.datetime.strptime(finish, '%Y-%m-%d %H:%M:%S')
+        while start_date <= finish_date:
+            date_str = start_date.strftime("%Y%m%d%H")
+            date_list.append(date_str)
+            start_date += datetime.timedelta(1)
+            # print(date_list)
+        return date_list
+
+
+
+
+    def getNextMonth1stDay(self,temp_date):
+        '''
+        获取传入时间的下个月的第一天的时间
+        :param temp_date: 当前时间
+        :return:下个月的第一天的时间
+        '''
+        now_date=temp_date
+        year=now_date.year
+        month=now_date.month
+        if month==12:
+            month=1
+            year+=1
+        else:
+            month+=1
+        target_date=datetime.datetime(year,month,1)
+        return target_date
+        # print(target_date)
+
     def validate(self):
         '''
         数据验证
         :return:
         '''
         pass
+
+    class MeteorologyData:
+        '''
+        气象数据
+        气象数据格式是前一天21点-当日的20点
+        '''
+        def __init__(self):
+            pass
+
+        def getTargetMonthAllDaysList(self, temp_date, datatype):
+            '''
+            获取指定指定月份的所有天的集合
+            :param temp_date:
+            :return:返回当前日期的当前月第一天到下月第一天的days list
+            '''
+            # 获得当月的起始时间
+            start = temp_date
+            # start = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+            # 获取下个月的首日
+            finish = self.getNextMonth1stDay(start)
+            days = self.getbetweenDays(start, finish)
+            return days
+            # print(start)
+
+    class HydrologyData:
+        '''
+        水文数据
+        水文的数据格式本身就是00-23的格式
+        '''
+        def __init__(self):
+            pass
+
+        def getTargetMonthAllDaysList(self, temp_date, datatype):
+            '''
+            获取指定指定月份的所有天的集合
+            :param temp_date:
+            :return:返回当前日期的当前月第一天到下月第一天的days list
+            '''
+            # 获得当月的起始时间
+            start = temp_date
+            # start = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+            # 获取下个月的首日
+            finish = self.getNextMonth1stDay(start)
+            days = self.getbetweenDays(start, finish)
+            return days
+            # print(start)
+
+
+
+def main():
+    perclock= PerclockData('wer','123')
+    now=datetime.datetime(2017,11,1)
+    perclock.getNextMonth1stDay(now)
+
+if __name__=='__main__':
+    main()
