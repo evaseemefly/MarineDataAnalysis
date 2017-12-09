@@ -175,7 +175,12 @@ class PerclockData:
         水文的数据格式本身就是00-23的格式
         '''
         def __init__(self,dirpath):
-            super.__init__(dirpath)
+            # self.dirpath=dirpath
+            super(PerclockData.HydrologyData, self).__init__(dirpath)
+            # self.dirpath=dirpath
+            # super(HydrologyData, self).__init__(dirpath)
+            # BaseData.__init__(self,dirpath)
+            # super.__init__(self,dirpath)
 
         def columns(self,temp_date):
             '''
@@ -198,8 +203,8 @@ class PerclockData:
             :return:
             '''
             # 目标文件的全名称
-            targetFileFullName="%s/wt%s.%s"%(BaseData.dirpath,temp_date.strftime("%m%d"),PerclockData.station)
-
+            # targetFileFullName="%s/wt%s.%s"%(BaseData.dirpath,temp_date.strftime("%m%d"),PerclockData.station)
+            targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), PerclockData.station)
             result_wt = pd.read_table(targetFileFullName, sep='\s+', names=self.columns(temp_date))
             print(result_wt)
             pass
@@ -224,10 +229,25 @@ class PerclockData:
 def main():
     perclock= PerclockData('wer','123')
     now=datetime.datetime(2017,11,29)
-    hydata=PerclockData.HydrologyData(settings.BASE_DIR+"/data")
+    # perclock.HydrologyData(settings.BASE_DIR+"/data")
+    # hydata=PerclockData.HydrologyData(settings.BASE_DIR+"/data")
+    hydata = perclock.HydrologyData(settings.BASE_DIR + "/data")
     hydata.getTargetDayData(now)
     print(hydata.getTargetMonthAllDaysList(now))
    # perclock.getNextMonth1stDay(now)
 
-if __name__=='__main__':
+if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+
+
+            
