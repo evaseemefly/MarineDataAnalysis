@@ -42,7 +42,7 @@ def GetFileData(filePathList):
                 tempdf.columns=table_index
                 lst.append(tempdf)
         except Exception as err:
-            print(singleFile)
+            print(singleFile) #为什么这有个try catch 这个数据不但格式不太好，而且编码还不一样，有些是unicode 有些是gbk 莫名其妙，而且是偶尔有
             print(err)
             
     return lst
