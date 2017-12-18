@@ -15,14 +15,7 @@ import datetime
 from enum import Enum
 from abc import ABCMeta, abstractmethod
 
-class DataType(Enum):
-    '''
-    数据类型的枚举
-    0：气象
-    1：水文
-    '''
-    Meteorology=0
-    Hydrology=1
+
 
 class ReadTimeData:
     '''
@@ -31,13 +24,23 @@ class ReadTimeData:
     def __init__(self):
         pass
 
+class Station:
+    '''
+    海洋站
+    '''
+    def __init__(self,name,code):
+        self.name=name
+        self.code
+
 class BaseData:
     '''
     水文气象的父类，
     有一个抽象方法getTargetMonthAllDaysList
     '''
-    def __init__(self,dirpath):
+    def __init__(self,dirpath,station,targetdate):
         self.dirpath=dirpath
+        self.station=station
+        self.targetdate=targetdate
 
 
     @abstractmethod
@@ -62,6 +65,7 @@ class PerclockData:
         '''
         self.station=station
         self.date=date
+
         pass
 
     def getTargetFullNameList(self):
@@ -174,9 +178,9 @@ class PerclockData:
         水文数据
         水文的数据格式本身就是00-23的格式
         '''
-        def __init__(self,dirpath):
+        def __init__(self,dirpath,station,targetdata):
             # self.dirpath=dirpath
-            super(PerclockData.HydrologyData, self).__init__(dirpath)
+            super(PerclockData.HydrologyData, self).__init__(dirpath,station,targetdata)
             # self.dirpath=dirpath
             # super(HydrologyData, self).__init__(dirpath)
             # BaseData.__init__(self,dirpath)
