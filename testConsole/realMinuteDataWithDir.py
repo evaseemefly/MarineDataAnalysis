@@ -10,6 +10,7 @@ table_index='DT,WT,SL,WL,DT1,AT,BP,HU,RN,WS1,WS2,WS3,WS4,WS5,WS6,WS7,WS8,WS9,WS1
 #获取指定路径中所有文件相对路径
 def GetFolderFile(folderPath):
     '''
+    可以直接在方法冒号后打三个点，回车，pycharm会自动补齐其余的说明
     获取指定路径中所有文件相对路径
     :param folderPath:
     :return:
@@ -28,7 +29,7 @@ def GetFileData(filePathList):
     '''
     读取txt文件并转换为dataframe，暂时先转换成lst，还没想好怎么合并，指定好列了应该好合并
     '''
-    lst=[]
+    lst,errlst=[],[]
     reg_removeHead = re.compile('[A-Z]*?[\s]+')
     reg_removeEnter = re.compile('\n')
     for singleFile in filePathList:
@@ -38,17 +39,28 @@ def GetFileData(filePathList):
                 result = reg_removeEnter.sub('', result) #移除换行
                 result = reg_removeHead.sub(' ', result) #移除标题等待重新指定
                 result = result.lstrip(' ')
-                tempdf=pd.read_csv(StringIO(result),delimiter='\s',header=None,names=table_index)
+                tempdf=pd.read_csv(StringIO(result),delimiter='\s',header=None,names=table_index,engine='python')
                 tempdf.columns=table_index
                 lst.append(tempdf)
         except Exception as err:
-            print(singleFile) #为什么这有个try catch 这个数据不但格式不太好，而且编码还不一样，有些是unicode 有些是gbk 莫名其妙，而且是偶尔有
-            print(err)
-            
-    return lst
+#             print(singleFile) #为什么这有个try catch 这个数据不但格式不太好，而且编码还不一样，有些是unicode 有些是gbk 莫名其妙，而且是偶尔有
+#             print(err)
+            errlst.append(err)
+    return (lst,errlst)
+
+                      
+def GetRealTimeDataFrame(filePathList):
+    dflst,errlst = GetFileData(filePathList)
+    print('获取数据',len(dflst),'行,因错误失去数据',len(errlst))
+    if(len(dflst)>1):
+        temp = dflst[0]
+        for i in range(1,len(dflst)):
+            temp = temp.append(dflst[i],ignore_index=True)
+        return (temp,errlst)
+    else:
+        return (dflst,errlst)
 
 
 #'这下边是测试'
-temp = ['../data/xxx/realtime/2017/11/01/18/SQ201711011832.11754','../data/xxx/realtime/2017/11/01/00/SQ201711010001.11754']
-
-result = GetFileData(temp)
+df,err = GetRealTimeDataFrame(GetFolderFile(datafile_path))
+df.head()
