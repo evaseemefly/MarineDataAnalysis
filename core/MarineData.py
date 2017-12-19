@@ -58,6 +58,7 @@ class BaseData:
 
 class PerclockData:
     '''
+
     by casablanca
     '''
     def __init__(self,station,date):
@@ -71,11 +72,24 @@ class PerclockData:
 
         pass
 
-    def getTargetFullNameList(self):
+    def build_Data(self,data_type):
         '''
-        根据海洋站名称获取指定海洋站的规定时间范围内的文件全路径集合
+
+        :param data_type:
         :return:
         '''
+        if data_type is enum_model.DataType.Hydrology:
+            return self.HydrologyData('',self.station,self.date)
+        elif data_type is enum_model.DataType.Meteorology:
+            return self.MeteorologyData('',self.station,self.date)
+
+    def getTargetFullNameList(self,dirpath):
+        '''
+        根据海洋站名称获取指定海洋站的规定时间范围内的文件全路径集合
+        根据传入的根目录获取指定海洋站的，在指定时间范围内的文件路径集合
+        :return:
+        '''
+
         pass
 
     def readData(self,targetpath):
@@ -177,6 +191,11 @@ class PerclockData:
             # print(start)
 
     class HydrologyData(BaseData):
+        """[summary]
+        水文数据
+        水文的数据格式本身就是00-23的格式
+        [description]
+        """
         '''
         水文数据
         水文的数据格式本身就是00-23的格式
@@ -190,7 +209,7 @@ class PerclockData:
             # BaseData.__init__(self,dirpath)
             # super.__init__(self,dirpath)
 
-        def columns(self,temp_date):
+        def __columns(self,temp_date):
             '''
 
             :param temp_date:
@@ -202,7 +221,12 @@ class PerclockData:
             arr_str.append('min')
             return arr_str
 
-        def getTargetDayData(self,temp_date):
+        def __getTargetDayData(self,temp_date):
+            """
+            读取指定日期对应的文件，读取其中的数据为dataframe
+            :param temp_date:
+            :return:
+            """
             '''
             读取指定日期对应的文件，读取其中的数据为dataframe
             :param temp_date:
@@ -211,40 +235,40 @@ class PerclockData:
             # 目标文件的全名称
             # targetFileFullName="%s/wt%s.%s"%(BaseData.dirpath,temp_date.strftime("%m%d"),PerclockData.station)
             targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), PerclockData.station)
-            self.result = pd.read_table(targetFileFullName, sep='\s+', names=self.columns(temp_date))
+            self.result = pd.read_table(targetFileFullName, sep='\s+', names=self.__columns(temp_date))
             print(self.result)
-
             pass
 
-        def getTargetMonthAllDaysList(self, temp_date):
-            '''
-            获取指定指定月份的所有天的集合
-            :param temp_date:
-            :return:返回当前日期的当前月第一天到下月第一天的days list
-            '''
-            # 获得当月的起始时间
-            start = temp_date
-            # start = datetime.datetime.strptime(date_str, '%Y-%m-%d')
-            # 获取下个月的首日
-            finish = PerclockData.getNextMonth1stDay(start)
-            days = PerclockData.getbetweenDays(start, finish)
-            return days
-            # print(start)
+        # 不在使用此方法了
+        # def getTargetMonthAllDaysList(self, temp_date):
+        #     '''
+        #     获取指定指定月份的所有天的集合
+        #     :param temp_date:
+        #     :return:返回当前日期的当前月第一天到下月第一天的days list
+        #     '''
+        #     # 获得当月的起始时间
+        #     start = temp_date
+        #     # start = datetime.datetime.strptime(date_str, '%Y-%m-%d')
+        #     # 获取下个月的首日
+        #     finish = PerclockData.getNextMonth1stDay(start)
+        #     days = PerclockData.getbetweenDays(start, finish)
+        #     return days
+        #     # print(start)
 
-        def getData(self):
-            '''
-            获取数据：
+        def getDataResult(self):
+            """
+             获取数据：
             具体步骤如下：
             1 生成时间list
             2 读取指定文件
             3 对读取后的dataframe进行转换
             4 将最终结果返回
             :return:
-            '''
+            """
             date_helper = Common.DateHelper()
             temp_date=date_helper.date_factory(enum_model.DataType.Hydrology,self.date)
 
-            self.getTargetDayData(self.date)
+            self.__getTargetDayData(self.date)
             # self.__read_table()
             # 删除数据的date列
             del self.result['date']

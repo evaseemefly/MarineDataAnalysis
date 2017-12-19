@@ -41,7 +41,7 @@ class DateHelper:
             self.date_type=type_str
             self.result
             self.columns
-            self.list_date
+            self.__list_date
             # 起始及终止时间
             # 不使用以下的方式
             # self.start_date
@@ -71,9 +71,9 @@ class DateHelper:
             00-23时
             :return:
             '''
-            if self.list_date is None:
-                self.list_date=pd.date_range(self.start_date, periods=24, freq='H')
-            return self.list_date
+            if self.__list_date is None:
+                self.__list_date=pd.date_range(self.start_date, periods=24, freq='H')
+            return self.__list_date
 
 
 
