@@ -8,3 +8,4 @@ class DataType(Enum):
     '''
     Meteorology=0
     Hydrology=1
+    

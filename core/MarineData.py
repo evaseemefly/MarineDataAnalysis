@@ -14,6 +14,8 @@ import pandas as pd
 import datetime
 from enum import Enum
 from abc import ABCMeta, abstractmethod
+from core import Common
+from data import enum_model
 
 
 
@@ -41,6 +43,7 @@ class BaseData:
         self.dirpath=dirpath
         self.station=station
         self.targetdate=targetdate
+        self.result=None
 
 
     @abstractmethod
@@ -187,7 +190,7 @@ class PerclockData:
             # BaseData.__init__(self,dirpath)
             # super.__init__(self,dirpath)
 
-        def columns(self):
+        def columns(self,temp_date):
             '''
 
             :param temp_date:
@@ -199,8 +202,6 @@ class PerclockData:
             arr_str.append('min')
             return arr_str
 
-
-
         def getTargetDayData(self,temp_date):
             '''
             读取指定日期对应的文件，读取其中的数据为dataframe
@@ -210,34 +211,10 @@ class PerclockData:
             # 目标文件的全名称
             # targetFileFullName="%s/wt%s.%s"%(BaseData.dirpath,temp_date.strftime("%m%d"),PerclockData.station)
             targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), PerclockData.station)
-            result = pd.read_table(targetFileFullName, sep='\s+', names=self.columns())
-            print(result)
-            return result
+            self.result = pd.read_table(targetFileFullName, sep='\s+', names=self.columns(temp_date))
+            print(self.result)
 
-        def getResultData(self):
-            '''
-            获取数据：
-            具体步骤如下：
-            1 生成时间list
-            2 读取指定文件
-            3 对读取后的dataframe进行转换
-            4 将最终结果返回
-            :return:
-            '''
-            self.getTargetDayData()
-            # 删除数据的date列
-            del self.result['date']
-            #转置
-            self.result= self.result.T
-            # 切片获取0-23点的数据，去掉min与max
-            self.result = self.result[:-2]
-            # 对df的index赋值
-            self.result.index=self.list_date
-            # 对df的columns赋值
-            # columns就是at hu 等等
-            self.result.columns=[self.date_type]
-            return self.result
-
+            pass
 
         def getTargetMonthAllDaysList(self, temp_date):
             '''
@@ -253,6 +230,34 @@ class PerclockData:
             days = PerclockData.getbetweenDays(start, finish)
             return days
             # print(start)
+
+        def getData(self):
+            '''
+            获取数据：
+            具体步骤如下：
+            1 生成时间list
+            2 读取指定文件
+            3 对读取后的dataframe进行转换
+            4 将最终结果返回
+            :return:
+            '''
+            date_helper = Common.DateHelper()
+            temp_date=date_helper.date_factory(enum_model.DataType.Hydrology,self.date)
+
+            self.getTargetDayData(self.date)
+            # self.__read_table()
+            # 删除数据的date列
+            del self.result['date']
+            #转置
+            self.result= self.result.T
+            # 切片获取0-23点的数据，去掉min与max
+            self.result = self.result[:-2]
+            # 对df的index赋值
+            self.result.index=temp_date.list_date
+            # 对df的columns赋值
+            # columns就是at hu 等等
+            self.result.columns=[self.date_type]
+            return self.result
 
 
 
