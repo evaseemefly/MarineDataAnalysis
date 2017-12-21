@@ -6,10 +6,16 @@ from pandas import Series,DataFrame
 import numpy as np
 import pandas as pd
 
+import logging
+import conf.settings as st
+# import db.mydb
+
 class DateHelper:
-    def __init__(self,date_str):
+    # def __init__(self,date_str):
+    def __init__(self, date):
         # 输入日期字符串并转换为datetime类型
-        self.targetdate=datetime.strptime(date_str,'%Y-%m-%d-%H-%M')
+        # self.targetdate=datetime.strptime(date_str,'%Y-%m-%d-%H-%M')
+        self.targetdate = date
 
     def date_factory(self,data_type,date):
         '''
@@ -19,10 +25,10 @@ class DateHelper:
         '''
         # 气象要素
         if data_type==enum_model.DataType.Meteorology:
-            return self.Hydrology_date(date)
+            return self.Meteorology_date(date)
         # 水文要素
         elif data_type==enum_model.DataType.Hydrology:
-            pass
+            return self.Hydrology_date(date)
 
 
     class Meteorology_date:
@@ -36,12 +42,12 @@ class DateHelper:
         '''
         水文要素时间处理
         '''
-        def __init__(self,date,type_str):
+        def __init__(self,date,date_type):
             self.date=date
-            self.date_type=type_str
-            self.result
-            self.columns
-            self.__list_date
+            self.date_type=date_type
+            self.result=None
+            self.columns=None
+            self.__list_date=None
             # 起始及终止时间
             # 不使用以下的方式
             # self.start_date
@@ -115,6 +121,33 @@ class DateHelper:
         #     # columns就是at hu 等等
         #     self.result.columns=[self.date_type]
         #     return self.result
+
+
+
+def logger(log_type):
+    #创建日志模块
+    logger=logging.getLogger(log_type)
+    logger.setLevel(st.LOG_LEVEL)
+
+    logging.basicConfig()
+
+    console=logging.StreamHandler()
+    console.setLevel(st.LOG_LEVEL)
+    format=logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+    log_file="%s/log/%s"%(st.BASE_DIR,st.LOG_TYPES[log_type])
+    fh=logging.FileHandler(log_file)
+    fh.setLevel(st.LOG_LEVEL)
+
+    formatter=logging.Formatter('%(asctime)s %(filename)s- %(levelname)s- %(message)s')
+
+    console.setFormatter(formatter)
+    fh.setFormatter(formatter)
+
+    logger.addHandler(console)
+    logger.addHandler(fh)
+
+    return logger
 
 
 

@@ -256,18 +256,18 @@ class PerclockData:
 
 
 
-def main():
-    perclock= PerclockData('wer','123')
-    now=datetime.datetime(2017,11,29)
-    # perclock.HydrologyData(settings.BASE_DIR+"/data")
-    # hydata=PerclockData.HydrologyData(settings.BASE_DIR+"/data")
-    hydata = perclock.HydrologyData(settings.BASE_DIR + "/data")
-    hydata.getTargetDayData(now)
-    print(hydata.getTargetMonthAllDaysList(now))
-   # perclock.getNextMonth1stDay(now)
-
-if __name__ == "__main__":
-    main()
+# def main():
+#     perclock= PerclockData('wer','123')
+#     now=datetime.datetime(2017,11,29)
+#     # perclock.HydrologyData(settings.BASE_DIR+"/data")
+#     # hydata=PerclockData.HydrologyData(settings.BASE_DIR+"/data")
+#     hydata = PerclockData(settings.BASE_DIR ,now)
+#     hydata.getTargetDayData(now)
+#     print(hydata.getTargetMonthAllDaysList(now))
+#    # perclock.getNextMonth1stDay(now)
+#
+# if __name__ == "__main__":
+#     main()
 
 
 
