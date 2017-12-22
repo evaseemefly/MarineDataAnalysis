@@ -1,4 +1,5 @@
 from datetime import datetime
+from dateutil.parser import parse
 from datetime import timedelta
 from data import enum_model
 
@@ -8,6 +9,8 @@ import pandas as pd
 
 import logging
 import conf.settings as st
+
+
 # import db.mydb
 
 class DateHelper:
@@ -17,7 +20,7 @@ class DateHelper:
         # self.targetdate=datetime.strptime(date_str,'%Y-%m-%d-%H-%M')
         self.targetdate = date
 
-    def date_factory(self,data_type,date):
+    def date_factory(self,data_type):
         '''
         日期工厂处理水文及气象两种类型的时间问题
         :param data_type:
@@ -25,10 +28,10 @@ class DateHelper:
         '''
         # 气象要素
         if data_type==enum_model.DataType.Meteorology:
-            return self.Meteorology_date(date)
+            return self.Meteorology_date(self.targetdate,data_type)
         # 水文要素
         elif data_type==enum_model.DataType.Hydrology:
-            return self.Hydrology_date(date)
+            return self.Hydrology_date(self.targetdate,data_type)
 
 
     class Meteorology_date:
@@ -48,6 +51,7 @@ class DateHelper:
             self.result=None
             self.columns=None
             self.__list_date=None
+            self.__list_date_allmonth = None
             # 起始及终止时间
             # 不使用以下的方式
             # self.start_date
@@ -71,6 +75,27 @@ class DateHelper:
             return self.start_date+timedelta(hours=23)
 
         @property
+        def monthfirstday_date(self):
+            '''
+            传入时间的该月首日
+            :return:
+            '''
+            start_datetime = datetime(self.start_date.year, self.start_date.month, 1)
+            return start_datetime
+
+        @property
+        def monthlastday_date(self):
+            '''
+            传入时间的该月最后一日
+            :return:
+            '''
+            end_datetime = pd.date_range(self.start_date, periods=1, freq='M')[0]
+
+            end_datetime = datetime(end_datetime.year, end_datetime.month, end_datetime.day, 23, 59)
+            #end_datetime = parse(str(end_datetime))
+            return end_datetime
+
+        @property
         def list_date(self):
             '''
             获取日期时间列表
@@ -80,6 +105,17 @@ class DateHelper:
             if self.__list_date is None:
                 self.__list_date=pd.date_range(self.start_date, periods=24, freq='H')
             return self.__list_date
+
+        @property
+        def list_date_allmonth(self):
+            '''
+            获取日期时间列表
+            当月1日00：00-月底最后一日23:59
+            :return:
+            '''
+            if self.__list_date_allmonth is None:
+                self.__list_date_allmonth = pd.date_range(self.monthfirstday_date,self.monthlastday_date,freq='H')
+            return self.__list_date_allmonth
 
 
 

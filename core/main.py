@@ -46,8 +46,12 @@ def main():
     # en=MarineData.PerclockData(station,target_date)
     en = MarineData.PerclockData(station, target_date)
 
-    environment=OperEnvironment(en.build_Data(enum_model.DataType.Hydrology,settings.SOURCE_PATH))
-    environment.run()
+    df_all= en.build_Data(enum_model.DataType.Hydrology,settings.SOURCE_PATH)
+    # if df_all!=None:
+    df_all.to_csv(settings.TARGET_PATH)
+    # 不使用此种方式
+    # environment=OperEnvironment(en.build_Data(enum_model.DataType.Hydrology,settings.SOURCE_PATH))
+    # environment.run()
     pass
 
 if __name__=='__main__':

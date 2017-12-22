@@ -1,3 +1,8 @@
+from datetime import datetime
+from dateutil.parser import parse
+from datetime import timedelta
+from data import enum_model
+
 class Station:
     '''
     海洋站model
@@ -50,3 +55,35 @@ class MarinData:
         :return:
         '''
         return os.path.join(self.path,self.filename)
+
+    @property
+    def targetdate(self):
+        '''
+        根据path与filename获取指定时间
+        eg:
+        path:
+            E:\03协同开发\99学习\05数据分析\网课源码\learn_sourcecode_DataAnalysis\codes_bymyself\data\ceshi\perclock\2017\11\01
+        filename:
+            SL1101.11754
+        :return:
+        '''
+
+        '''
+        通过正则匹配时间的思路：
+            S1、先将path中的\或更多的\替换为一个\
+            1、找到perclock\ 与后面的\之间的 作为 year
+            2、year 之后的\ \ 之间的 作为 month
+            3、month 之后的 \ \ 之间的作为 day
+        '''
+        index= self.path.index('perclock')
+        per_len=len('perclock')
+        # \\2017\\11\\01\\SL1101.11754
+        ext_str=self.path[index+per_len:]
+        # 根据 \\ 切分为集合
+        # ['', '2017', '11', '01', 'SL1101.11754']
+        list_split=ext_str.split('\\')
+        year=int(list_split[1])
+        month=int(list_split[2])
+        # day=str(list_split[3])
+        # 注意创建时间对象时，只能传入int类型
+        return datetime(year,month,1)
