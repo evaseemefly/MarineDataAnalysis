@@ -1,6 +1,17 @@
 
 import os
-import bin.MarineData
+# import bin.MarineData
+from core import MarineData
+from data import model
+from datetime import datetime
+from data import enum_model
+from datetime import timedelta
+from conf import settings
+
+from pandas import Series,DataFrame
+import numpy as np
+import pandas as pd
+
 # 当前项目根目录
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -14,8 +25,9 @@ class OperEnvironment:
         pass
 
     def run(self):
-        self.marineData.readData(BASE_DIR+r'/data/XXX/perclock/2017/11/29/at1129.07422')
-        pass
+
+        self.marineData.getDataResult()
+
 
 def main():
     '''
@@ -25,8 +37,16 @@ def main():
     # 1、根据配置文件或输入选择当前是读取整点还是分钟的数据
     #
     print(BASE_DIR)
-    en=bin.MarineData.PerclockData('123','123')
-    environment=OperEnvironment(en)
+    station=model.Station("ceshi","11754","")
+
+    date_str = '2017-11-29'
+    # date_target=datetime.datetime.strptime(date_str,'%Y-%m-%d')
+    target_date = datetime.strptime(date_str, '%Y-%m-%d')
+
+    # en=MarineData.PerclockData(station,target_date)
+    en = MarineData.PerclockData(station, target_date)
+
+    environment=OperEnvironment(en.build_Data(enum_model.DataType.Hydrology,settings.SOURCE_PATH))
     environment.run()
     pass
 

@@ -25,3 +25,28 @@ class DateTime:
         '''
         self.start=start
         self.finish=finish
+
+import os
+
+class MarinData:
+    '''
+    海洋数据
+    '''
+    def __init__(self,path,filename,type,element):
+        '''
+
+        :param path:路径
+        :param type:种类
+        '''
+        self.path=path
+        self.filename=filename
+        self.type=type
+        self.element=element
+
+    @property
+    def fullname(self):
+        '''
+        全路径名称
+        :return:
+        '''
+        return os.path.join(self.path,self.filename)

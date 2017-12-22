@@ -4,7 +4,7 @@ import os
 BASE_DIR=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 海洋站的原始路径
-SOURCE_PATH=r""
+SOURCE_PATH=r"/Users/liusihan/Documents/GitHub/learn_sourcecode_DataAnalysis/codes_bymyself/data/"
 # 输出的路径
 TARGET_PATH=r""
 
@@ -20,6 +20,21 @@ STATIONS={
         'TYPE':'wt,sl,wl,at,bp,hu,rn,ws'
     },
 
+}
+
+'''
+  水文：H
+  气象：M
+'''
+DATA_TYPE={
+    'WT':'H',
+    'SL':'H',
+    'WL':'H',
+    'WS':'H',
+    'AT':'M',
+    'BP':'M',
+    'HU':'M',
+    'RN':'M',
 }
 
 # 日志的相关配置
