@@ -89,6 +89,7 @@ class PerclockData:
         根据传入的根目录获取指定海洋站的，在指定时间范围内的文件路径集合
         :return:
         '''
+        elements=['AT','BP','HU','RN','SL','WL','WS','WT']
 
         pass
 
