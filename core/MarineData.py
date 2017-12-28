@@ -122,7 +122,11 @@ class BaseData:
         # 注意此处也要加入判断，因为ws的数据在读取数据时与其他数据也略有不同，不需要指定columns
 
         if self.element.lower() != "ws":
-            self.result = pd.read_csv(f, sep='\s+', names=self.__columns)
+            # 注意此处有问题，父类无法直接调用子类的私有属性或方法
+            # 将子类中的属性修改为公开的
+            # columns=self.__columns
+            columns = self.columns
+            self.result = pd.read_csv(f, sep='\s+', names=columns)
         elif self.element.lower() == "ws":
             self.result = pd.read_csv(f, sep='\s+')
             # print(self.result)
@@ -177,9 +181,11 @@ class PerclockData:
         for temp_file in files:
             # 遍历文件名集合，并对其分类
             # 使用工厂方式创建的水文和气象数据对象均要实现getDataResult方法
-            temp_data=None
+            temp_data_hy=None
+            temp_data_me = None
             # 此处不再使用判断传入的类型，改为遍历的水文、气象两种类型的数据
             # for temp_enum in enum_model.DataType:
+            print("正在录入%s"%temp_file.fullname)
             temp_data_hy = self.HydrologyData(temp_file.fullname, self.station, temp_file.targetdate, temp_file.element)
             result_hy = temp_data_hy.getDataResult()
             df_all = df_all.combine_first(result_hy)
@@ -187,6 +193,7 @@ class PerclockData:
             temp_data_me = self.MeteorologyData(temp_file.fullname, self.station, temp_file.targetdate, temp_file.element)
             result_me = temp_data_me.getDataResult()
             df_all = df_all.combine_first(result_me)
+            print("录入成功")
             # if data_type is enum_model.DataType.Hydrology:
             #     # 此处有问题，遍历的file对象应该是对每个file对象获取其对应的时间，而不能使用self.date
             #     temp_data= self.HydrologyData(temp_file.fullname,self.station,temp_file.targetdate,temp_file.element)
@@ -277,9 +284,9 @@ class PerclockData:
                                             print("****%s已追加至忽略集合中"%marinData_model.fullname)
                                             break
                                         # 不匹配的才放入文件集合中
-                                        if is_matching==False:
-                                           files_list.append(marinData_model)
-                                           print("%s已追加"%marinData_model.fullname)
+                                    if is_matching==False:
+                                       files_list.append(marinData_model)
+                                       print("%s已追加"%marinData_model.fullname)
                             print("-----------")
         return files_list,ignorefiles_list
 
@@ -375,7 +382,7 @@ class PerclockData:
         '''
 
         @property
-        def __columns(self):
+        def columns(self):
             '''
 
             :param temp_date:
@@ -510,7 +517,7 @@ class PerclockData:
             # super.__init__(self,dirpath)
 
         @property
-        def __columns(self):
+        def columns(self):
             '''
 
             :param temp_date:
