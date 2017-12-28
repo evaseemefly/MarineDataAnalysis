@@ -50,14 +50,82 @@ class BaseData:
         self.result=None
 
 
-    @abstractmethod
+    # @abstractmethod
+    # def getDataResult(self):
+    #     '''
+    #     根据传入的时间，返回该时间对应的月数据
+    #     :return:
+    #     '''
+    #     pass
+
     def getDataResult(self):
+        """
+         获取数据：
+        具体步骤如下：
+        1 生成时间list
+        2 读取指定文件
+        3 对读取后的dataframe进行转换
+        4 将最终结果返回
+
+        存在的设计问题：
+        由于是外侧类的工厂方法调用，而外侧的类中getmatchingFiles方法是生成该月的所有匹配文件集合
+        :return:
+        """
+        date_helper = Common.DateHelper(self.targetdate)
+        temp_date = date_helper.date_factory(enum_model.DataType.Meteorology)
+
+        self.getTargetDayData()
+        if self.element.lower() != 'ws':
+            # self.__read_table()
+            # 删除数据的date列
+            del self.result['date']
+            # 转置
+            self.result = self.result.T
+            # 切片获取0-23点的数据，去掉min与max
+            self.result = self.result[:-2]
+            # 对df的index赋值
+            self.result.index = temp_date.list_date
+            # 对df的columns赋值
+            # columns就是at hu 等等
+            self.result.columns = [self.element]
+        # 注意风向风速的要特殊处理！！！
+        elif self.element.lower() == 'ws':
+            # 获取第一行（相当于是列头）
+            columns = self.result.columns
+            # 获取剔除第一个日期之外的其他值
+            self.result = pd.DataFrame(columns)[1:]
+            # 修改形状
+            self.result = pd.DataFrame(self.result.values.reshape((24, 2)))
+            self.result.index = temp_date.list_date
+            self.result.columns = ['WD', 'WS']
+        return self.result
+
+    def getTargetDayData(self):
+        """
+        读取指定日期对应的文件，读取其中的数据为dataframe
+        :param temp_date:
+        :return:
+        """
         '''
-        根据传入的时间，返回该时间对应的月数据
+        读取指定日期对应的文件，读取其中的数据为dataframe
+        :param temp_date:
         :return:
         '''
-        pass
+        # 目标文件的全名称
+        # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.station)
+        targetFileFullName = "%s" % (self.dirpath)
+        # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.outter.station)
+        # ！！！！注意使用下面的方式 若路径中存在中文，则会出现问题
+        # self.result = pd.read_table(targetFileFullName, sep='\s+', names=self.__columns)
+        # 改为此种方式不会有问题
+        f = open(targetFileFullName)
+        # 注意此处也要加入判断，因为ws的数据在读取数据时与其他数据也略有不同，不需要指定columns
 
+        if self.element.lower() != "ws":
+            self.result = pd.read_csv(f, sep='\s+', names=self.__columns)
+        elif self.element.lower() == "ws":
+            self.result = pd.read_csv(f, sep='\s+')
+            # print(self.result)
 
 
 class PerclockData:
@@ -78,7 +146,8 @@ class PerclockData:
 
         pass
 
-    def build_Data(self,data_type,path):
+    # def build_Data(self, data_type, path):
+    def build_Data(self,path):
         '''
         使用工厂方法（现已修改）
         根据报文类型（水文、气象）以及根目录：
@@ -90,6 +159,7 @@ class PerclockData:
 
         # stations_list= self.getmatchingFiles(os.path.join(path,self.station.stationname),self.date)
         # 先获取文件目录
+        # 注意此处获取的文件全路径时传入的时间的当月的全部文件
         files,ignorefiles=self.getmatchingFiles(os.path.join(path,self.station.stationname),self.date)
         # 创建空的dataframe
         # 注意此处与HydrologyData.getDataResult中均用到Common.DateHelper(self.date)！！！！！需要再修改
@@ -108,13 +178,22 @@ class PerclockData:
             # 遍历文件名集合，并对其分类
             # 使用工厂方式创建的水文和气象数据对象均要实现getDataResult方法
             temp_data=None
-            if data_type is enum_model.DataType.Hydrology:
-                # 此处有问题，遍历的file对象应该是对每个file对象获取其对应的时间，而不能使用self.date
-                temp_data= self.HydrologyData(temp_file.fullname,self.station,temp_file.targetdate,temp_file.element)
-            elif data_type is enum_model.DataType.Meteorology:
-                temp_data= self.MeteorologyData(temp_file.fullname,self.station,temp_file.targetdate,temp_file.element)
-            result=temp_data.getDataResult()
-            df_all=df_all.combine_first(result)
+            # 此处不再使用判断传入的类型，改为遍历的水文、气象两种类型的数据
+            # for temp_enum in enum_model.DataType:
+            temp_data_hy = self.HydrologyData(temp_file.fullname, self.station, temp_file.targetdate, temp_file.element)
+            result_hy = temp_data_hy.getDataResult()
+            df_all = df_all.combine_first(result_hy)
+
+            temp_data_me = self.MeteorologyData(temp_file.fullname, self.station, temp_file.targetdate, temp_file.element)
+            result_me = temp_data_me.getDataResult()
+            df_all = df_all.combine_first(result_me)
+            # if data_type is enum_model.DataType.Hydrology:
+            #     # 此处有问题，遍历的file对象应该是对每个file对象获取其对应的时间，而不能使用self.date
+            #     temp_data= self.HydrologyData(temp_file.fullname,self.station,temp_file.targetdate,temp_file.element)
+            # elif data_type is enum_model.DataType.Meteorology:
+            #     temp_data= self.MeteorologyData(temp_file.fullname,self.station,temp_file.targetdate,temp_file.element)
+            # result=temp_data.getDataResult()
+            # df_all=df_all.combine_first(result)
             # temp_perclock_data.getDataResult()
         return df_all
 
@@ -159,46 +238,49 @@ class PerclockData:
                 targetpath=os.path.join(year_dir,month)
                 '''
                 targetpath目录是到月的目录
-                
+                月的目录下还有日的文件夹
                 '''
-                for root, dirs, files in os.walk(targetpath): 
-                    if len(dirs)==0: 
-                        for temp_file in files:
-                            ''' 
-                            注意追加时不是所有的文件名都要追加
+                for root, dirs, files in os.walk(targetpath):
+                    for temp_dir in dirs:
+                        targetpath=os.path.join(targetpath,temp_dir)
+                        for root,dirs,files in os.walk(targetpath):
+                            # if len(dirs)==0:
+                            for temp_file in files:
+                                ''' 
+                                注意追加时不是所有的文件名都要追加
+        
+                                '''
+                                # 根据文件名判断文件的水文气象分类
 
-                            '''
-                            # 根据文件名判断文件的水文气象分类
+                                str_file=temp_file.upper()
+                                # 肯定是大写的
+                                res_match_type = re.match('[a-zA-Z]{2}', str_file)
+                                if res_match_type!=None:
+                                    # 使用group匹配正则的匹配值
+                                    res_match_type = res_match_type.group()
+                                    # 从字典中找到对应的
+                                    data_value= settings.DATA_TYPE[res_match_type]
+                                    # result = 5 > 3?1: 0
+                                    # 注意py中不支持三元运算符
+                                    data_value=enum_model.DataType.Hydrology if data_value == 'H' else enum_model.DataType.Meteorology
+                                    # data_value=(data_value=='H'? enum_model.DataType.Hydrology:enum_model.DataType.Meteorology)
+                                    is_matching=False
+                                    marinData_model = model.MarinData(root,temp_file, data_value,res_match_type)
+                                    #marinData_model=model.MarinData(os.path.join(root, temp_file), data_value)
+                                    # 有符合正则条件的放入忽略集合中
+                                    for temp_match in re_match:
+                                        res_match=re.match(temp_match,str_file)
+                                        if res_match!=None:
+                                            is_matching=True
 
-                            str_file=temp_file.upper()
-                            # 肯定是大写的
-                            res_match_type = re.match('[a-zA-Z]{2}', str_file)
-                            if res_match_type!=None:
-                                # 使用group匹配正则的匹配值
-                                res_match_type = res_match_type.group()
-                                # 从字典中找到对应的
-                                data_value= settings.DATA_TYPE[res_match_type]
-                                # result = 5 > 3?1: 0
-                                # 注意py中不支持三元运算符
-                                data_value=enum_model.DataType.Hydrology if data_value == 'H' else enum_model.DataType.Meteorology
-                                # data_value=(data_value=='H'? enum_model.DataType.Hydrology:enum_model.DataType.Meteorology)
-                                is_matching=False
-                                marinData_model = model.MarinData(root,temp_file, data_value,res_match_type)
-                                #marinData_model=model.MarinData(os.path.join(root, temp_file), data_value)
-                                # 有符合正则条件的放入忽略集合中
-                                for temp_match in re_match:
-                                    res_match=re.match(temp_match,str_file)
-                                    if res_match!=None:
-                                        is_matching=True
-
-                                        ignorefiles_list.append(marinData_model)
-                                        print("****%s已追加至忽略集合中"%marinData_model.fullname)
-                                        break
-                                # 不匹配的才放入文件集合中
-                                if is_matching==False:
-                                    files_list.append(marinData_model)
-                                    print("%s已追加"%marinData_model.fullname)
-                    print("-----------")
+                                            ignorefiles_list.append(marinData_model)
+                                            print("****%s已追加至忽略集合中"%marinData_model.fullname)
+                                            break
+                                        # 不匹配的才放入文件集合中
+                                        if is_matching==False:
+                                           files_list.append(marinData_model)
+                                           print("%s已追加"%marinData_model.fullname)
+                            print("-----------")
         return files_list,ignorefiles_list
 
     def getTargetFullNameList(self,dirpath):
@@ -292,6 +374,101 @@ class PerclockData:
         我的思路，气象数据与水文数据类中都有getTargetMonthAllDaysList这个方法
         '''
 
+        @property
+        def __columns(self):
+            '''
+
+            :param temp_date:
+            :return:
+            '''
+            yesterday = np.arange(21, 24).astype(str)
+            today = np.arange(0, 21).astype(str)
+            # 气象时间list
+            meteorology_date = np.hstack((yesterday, today)).tolist()
+            meteorology_date.insert(0, 'date')
+            meteorology_date.append('max')
+            meteorology_date.append('min')
+            return meteorology_date
+
+
+
+        def __init__(self, dirpath, station, targetdata,element):
+            super(PerclockData.MeteorologyData, self).__init__(dirpath, station, targetdata)
+            self.element = element
+
+        # def __getTargetDayData(self):
+        #     """
+        #     读取指定日期对应的文件，读取其中的数据为dataframe
+        #     :param temp_date:
+        #     :return:
+        #     """
+        #     '''
+        #     读取指定日期对应的文件，读取其中的数据为dataframe
+        #     :param temp_date:
+        #     :return:
+        #     '''
+        #     # 目标文件的全名称
+        #     # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.station)
+        #     targetFileFullName="%s"%(self.dirpath)
+        #     # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.outter.station)
+        #     # ！！！！注意使用下面的方式 若路径中存在中文，则会出现问题
+        #     # self.result = pd.read_table(targetFileFullName, sep='\s+', names=self.__columns)
+        #     # 改为此种方式不会有问题
+        #     f = open(targetFileFullName)
+        #     # 注意此处也要加入判断，因为ws的数据在读取数据时与其他数据也略有不同，不需要指定columns
+        #
+        #     if self.element.lower()!="ws":
+        #         self.result=pd.read_csv(f, sep='\s+', names=self.__columns)
+        #     elif self.element.lower()=="ws":
+        #         self.result = pd.read_csv(f, sep='\s+')
+        #     # print(self.result)
+
+
+        '''
+        水文气象的两个子类的getDataResult方法均写在父类BaseData中
+        '''
+        # def getDataResult(self):
+        #     """
+        #      获取数据：
+        #     具体步骤如下：
+        #     1 生成时间list
+        #     2 读取指定文件
+        #     3 对读取后的dataframe进行转换
+        #     4 将最终结果返回
+        #
+        #     存在的设计问题：
+        #     由于是外侧类的工厂方法调用，而外侧的类中getmatchingFiles方法是生成该月的所有匹配文件集合
+        #     :return:
+        #     """
+        #     date_helper = Common.DateHelper(self.targetdate)
+        #     temp_date = date_helper.date_factory(enum_model.DataType.Meteorology)
+        #
+        #     self.getTargetDayData()
+        #     if self.element.lower() != 'ws':
+        #         # self.__read_table()
+        #         # 删除数据的date列
+        #         del self.result['date']
+        #         # 转置
+        #         self.result = self.result.T
+        #         # 切片获取0-23点的数据，去掉min与max
+        #         self.result = self.result[:-2]
+        #         # 对df的index赋值
+        #         self.result.index = temp_date.list_date
+        #         # 对df的columns赋值
+        #         # columns就是at hu 等等
+        #         self.result.columns = [self.element]
+        #     # 注意风向风速的要特殊处理！！！
+        #     elif self.element.lower() == 'ws':
+        #         # 获取第一行（相当于是列头）
+        #         columns = self.result.columns
+        #         # 获取剔除第一个日期之外的其他值
+        #         self.result = pd.DataFrame(columns)[1:]
+        #         # 修改形状
+        #         self.result = pd.DataFrame(self.result.values.reshape((24, 2)))
+        #         self.result.index = temp_date.list_date
+        #         self.result.columns = ['WD', 'WS']
+        #     return self.result
+
 
         def getTargetMonthAllDaysList(self, temp_date):
             '''
@@ -345,32 +522,32 @@ class PerclockData:
             arr_str.append('min')
             return arr_str
 
-        def __getTargetDayData(self):
-            """
-            读取指定日期对应的文件，读取其中的数据为dataframe
-            :param temp_date:
-            :return:
-            """
-            '''
-            读取指定日期对应的文件，读取其中的数据为dataframe
-            :param temp_date:
-            :return:
-            '''
-            # 目标文件的全名称
-            # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.station)
-            targetFileFullName="%s"%(self.dirpath)
-            # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.outter.station)
-            # ！！！！注意使用下面的方式 若路径中存在中文，则会出现问题
-            # self.result = pd.read_table(targetFileFullName, sep='\s+', names=self.__columns)
-            # 改为此种方式不会有问题
-            f = open(targetFileFullName)
-            # 注意此处也要加入判断，因为ws的数据在读取数据时与其他数据也略有不同，不需要指定columns
-
-            if self.element.lower()!="ws":
-                self.result=pd.read_csv(f, sep='\s+', names=self.__columns)
-            elif self.element.lower()=="ws":
-                self.result = pd.read_csv(f, sep='\s+')
-            # print(self.result)
+        # def __getTargetDayData(self):
+        #     """
+        #     读取指定日期对应的文件，读取其中的数据为dataframe
+        #     :param temp_date:
+        #     :return:
+        #     """
+        #     '''
+        #     读取指定日期对应的文件，读取其中的数据为dataframe
+        #     :param temp_date:
+        #     :return:
+        #     '''
+        #     # 目标文件的全名称
+        #     # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.station)
+        #     targetFileFullName="%s"%(self.dirpath)
+        #     # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.outter.station)
+        #     # ！！！！注意使用下面的方式 若路径中存在中文，则会出现问题
+        #     # self.result = pd.read_table(targetFileFullName, sep='\s+', names=self.__columns)
+        #     # 改为此种方式不会有问题
+        #     f = open(targetFileFullName)
+        #     # 注意此处也要加入判断，因为ws的数据在读取数据时与其他数据也略有不同，不需要指定columns
+        #
+        #     if self.element.lower()!="ws":
+        #         self.result=pd.read_csv(f, sep='\s+', names=self.__columns)
+        #     elif self.element.lower()=="ws":
+        #         self.result = pd.read_csv(f, sep='\s+')
+        #     # print(self.result)
 
 
         # 不在使用此方法了
@@ -389,47 +566,51 @@ class PerclockData:
         #     return days
         #     # print(start)
 
-        def getDataResult(self):
-            """
-             获取数据：
-            具体步骤如下：
-            1 生成时间list
-            2 读取指定文件
-            3 对读取后的dataframe进行转换
-            4 将最终结果返回
 
-            存在的设计问题：
-            由于是外侧类的工厂方法调用，而外侧的类中getmatchingFiles方法是生成该月的所有匹配文件集合
-            :return:
-            """
-            date_helper = Common.DateHelper(self.targetdate)
-            temp_date=date_helper.date_factory(enum_model.DataType.Hydrology)
-
-            self.__getTargetDayData()
-            if self.element.lower()!='ws':
-                # self.__read_table()
-                # 删除数据的date列
-                del self.result['date']
-                #转置
-                self.result= self.result.T
-                # 切片获取0-23点的数据，去掉min与max
-                self.result = self.result[:-2]
-                # 对df的index赋值
-                self.result.index=temp_date.list_date
-                # 对df的columns赋值
-                # columns就是at hu 等等
-                self.result.columns=[self.element]
-            # 注意风向风速的要特殊处理！！！
-            elif self.element.lower()=='ws':
-                # 获取第一行（相当于是列头）
-                columns = self.result.columns
-                # 获取剔除第一个日期之外的其他值
-                self.result = pd.DataFrame(columns)[1:]
-                # 修改形状
-                self.result = pd.DataFrame(self.result.values.reshape((24, 2)))
-                self.result.index = temp_date.list_date
-                self.result.columns = ['WD', 'WS']
-            return self.result
+        '''
+         水文气象的两个子类的getDataResult方法均写在父类BaseData中
+         '''
+        # def getDataResult(self):
+        #     """
+        #      获取数据：
+        #     具体步骤如下：
+        #     1 生成时间list
+        #     2 读取指定文件
+        #     3 对读取后的dataframe进行转换
+        #     4 将最终结果返回
+        #
+        #     存在的设计问题：
+        #     由于是外侧类的工厂方法调用，而外侧的类中getmatchingFiles方法是生成该月的所有匹配文件集合
+        #     :return:
+        #     """
+        #     date_helper = Common.DateHelper(self.targetdate)
+        #     temp_date=date_helper.date_factory(enum_model.DataType.Hydrology)
+        #
+        #     self.getTargetDayData()
+        #     if self.element.lower()!='ws':
+        #         # self.__read_table()
+        #         # 删除数据的date列
+        #         del self.result['date']
+        #         #转置
+        #         self.result= self.result.T
+        #         # 切片获取0-23点的数据，去掉min与max
+        #         self.result = self.result[:-2]
+        #         # 对df的index赋值
+        #         self.result.index=temp_date.list_date
+        #         # 对df的columns赋值
+        #         # columns就是at hu 等等
+        #         self.result.columns=[self.element]
+        #     # 注意风向风速的要特殊处理！！！
+        #     elif self.element.lower()=='ws':
+        #         # 获取第一行（相当于是列头）
+        #         columns = self.result.columns
+        #         # 获取剔除第一个日期之外的其他值
+        #         self.result = pd.DataFrame(columns)[1:]
+        #         # 修改形状
+        #         self.result = pd.DataFrame(self.result.values.reshape((24, 2)))
+        #         self.result.index = temp_date.list_date
+        #         self.result.columns = ['WD', 'WS']
+        #     return self.result
 
 
 

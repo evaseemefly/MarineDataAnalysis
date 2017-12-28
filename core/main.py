@@ -37,7 +37,7 @@ def main():
     # 1、根据配置文件或输入选择当前是读取整点还是分钟的数据
     #
     print(BASE_DIR)
-    station=model.Station("ceshi","11754","")
+    station=model.Station("sanya","11754","")
 
     date_str = '2017-11-29'
     # date_target=datetime.datetime.strptime(date_str,'%Y-%m-%d')
@@ -46,7 +46,10 @@ def main():
     # en=MarineData.PerclockData(station,target_date)
     en = MarineData.PerclockData(station, target_date)
 
-    df_all= en.build_Data(enum_model.DataType.Hydrology,settings.SOURCE_PATH)
+    # 不再需要传入报文类型——2017 12 27
+    # df_all= en.build_Data(enum_model.DataType.Hydrology,settings.SOURCE_PATH)
+    df_all = en.build_Data(settings.SOURCE_PATH)
+
     # if df_all!=None:
     df_all.to_csv(settings.TARGET_PATH)
     # 不使用此种方式
