@@ -10,8 +10,8 @@ SOURCE_PATH=r"/Users/liusihan/Documents/重要测试数据/sanya"
 # SOURCE_PATH=r"E:\03协同开发\单位海洋站数据分析\data"
 
 # 输出的路径
-TARGET_PATH=r"E:\03协同开发\单位海洋站数据分析\result\201711.csv"
-
+# TARGET_PATH=r"E:\03协同开发\单位海洋站数据分析\result\201711.csv"
+TARGET_PATH=r"/Users/liusihan/Documents/重要测试数据/result/201711.csv"
 # 海洋站 字典
 # 类似django中的settings中的DATABASE
 STATIONS={
