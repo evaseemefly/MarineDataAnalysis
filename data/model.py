@@ -2,6 +2,7 @@ from datetime import datetime
 from dateutil.parser import parse
 from datetime import timedelta
 from data import enum_model
+import os
 
 class Station:
     '''
@@ -81,7 +82,10 @@ class MarinData:
         ext_str=self.path[index+per_len:]
         # 根据 \\ 切分为集合
         # ['', '2017', '11', '01', 'SL1101.11754']
-        list_split=ext_str.split('\\')
+        # 注意win与mac下的分隔符不同
+        # 此处需要获取系统的分隔符
+        separator= os.sep
+        list_split=ext_str.split(separator)
         year=int(list_split[1])
         month=int(list_split[2])
         # day=str(list_split[3])
