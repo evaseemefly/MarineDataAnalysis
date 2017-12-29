@@ -93,7 +93,7 @@ class BaseData:
             self.result.columns = [self.element]
         # 注意风向风速的要特殊处理！！！
         elif self.element.lower() == 'ws':
-            # 获取第一行（相当于是列头）
+            # 获取第一行（相当于是列头）ß
             columns = self.result.columns
             # 获取剔除第一个日期之外的其他值
             self.result = pd.DataFrame(columns)[1:]
@@ -131,9 +131,15 @@ class BaseData:
             # columns=self.__columns
             columns = self.columns
             try:
-
+                '''
+                注意此处需要加上判断dataframe是否为空的判断
+                若dataframe为空的话返回false
+                '''
                 self.result = pd.read_csv(f, sep='\s+', names=columns)
-                isOK=True
+                if self.result.empty==True:
+                    isOK=False
+                else:
+                    isOK=True
             except UnicodeDecodeError:
                 print("编码错误")
             except Exception:
