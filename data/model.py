@@ -88,6 +88,6 @@ class MarinData:
         list_split=ext_str.split(separator)
         year=int(list_split[1])
         month=int(list_split[2])
-        # day=str(list_split[3])
+        day=int(list_split[3])
         # 注意创建时间对象时，只能传入int类型
-        return datetime(year,month,1)
+        return datetime(year,month,day)

@@ -74,7 +74,10 @@ class BaseData:
         date_helper = Common.DateHelper(self.targetdate)
         temp_date = date_helper.date_factory(enum_model.DataType.Meteorology)
 
-        self.getTargetDayData()
+        isOK=self.getTargetDayData()
+        # 若读取时出错时直接跳出
+        if isOK==False:
+            return
         if self.element.lower() != 'ws':
             # self.__read_table()
             # 删除数据的date列
@@ -111,6 +114,7 @@ class BaseData:
         :param temp_date:
         :return:
         '''
+        isOK=False
         # 目标文件的全名称
         # targetFileFullName = "%s/wt%s.%s" % (self.dirpath, temp_date.strftime("%m%d"), self.station)
         targetFileFullName = "%s" % (self.dirpath)
@@ -126,10 +130,24 @@ class BaseData:
             # 将子类中的属性修改为公开的
             # columns=self.__columns
             columns = self.columns
-            self.result = pd.read_csv(f, sep='\s+', names=columns)
+            try:
+
+                self.result = pd.read_csv(f, sep='\s+', names=columns)
+                isOK=True
+            except UnicodeDecodeError:
+                print("编码错误")
+            except Exception:
+                print("未知错误")
         elif self.element.lower() == "ws":
-            self.result = pd.read_csv(f, sep='\s+')
+            try:
+                self.result = pd.read_csv(f, sep='\s+')
+                isOK = True
+            except UnicodeDecodeError:
+                print("编码错误")
+            except Exception:
+                print("未知错误")
             # print(self.result)
+        return isOK
 
 
 class PerclockData:
@@ -188,10 +206,14 @@ class PerclockData:
             print("正在录入%s"%temp_file.fullname)
             temp_data_hy = self.HydrologyData(temp_file.fullname, self.station, temp_file.targetdate, temp_file.element)
             result_hy = temp_data_hy.getDataResult()
+            if result_hy is None:
+                continue
             df_all = df_all.combine_first(result_hy)
 
             temp_data_me = self.MeteorologyData(temp_file.fullname, self.station, temp_file.targetdate, temp_file.element)
             result_me = temp_data_me.getDataResult()
+            if result_me is None:
+                continue
             df_all = df_all.combine_first(result_me)
             print("录入成功")
             # if data_type is enum_model.DataType.Hydrology:
@@ -222,7 +244,8 @@ class PerclockData:
         ignorefiles_list = []
         # 当前路径下的目录
         year=str(target_date.year)
-        month=str(target_date.month)
+        # month=str(target_date.month)
+        month=target_date.strftime("%m")
         # year='2017'
         # month='11'
         # start='01'
@@ -249,8 +272,8 @@ class PerclockData:
                 '''
                 for root, dirs, files in os.walk(targetpath):
                     for temp_dir in dirs:
-                        targetpath=os.path.join(targetpath,temp_dir)
-                        for root,dirs,files in os.walk(targetpath):
+                        temp_targetpath=os.path.join(targetpath,temp_dir)
+                        for root,dirs,files in os.walk(temp_targetpath):
                             # if len(dirs)==0:
                             for temp_file in files:
                                 ''' 
