@@ -38,8 +38,88 @@ class DateHelper:
         '''
         气象要素时间处理
         '''
-        def __init__(self,date):
-            pass
+        '''
+                水文要素时间处理
+                '''
+
+        def __init__(self, date, date_type):
+            self.date = date
+            self.date_type = date_type
+            self.result = None
+            self.columns = None
+            self.__list_date = None
+            self.__list_date_allmonth = None
+            # 起始及终止时间
+            # 不使用以下的方式
+            # self.start_date
+            # self.end_date
+
+        @property
+        def start_date(self):
+            '''
+            根据当前的时间计算起始时间
+            :return:
+            '''
+            return datetime(self.date.year, self.date.month, self.date.day)
+
+        @property
+        def end_date(self):
+            '''
+            根据当前的时间计算终止时间
+            :return:
+            '''
+            return self.start_date + timedelta(hours=23)
+
+        @property
+        def monthfirstday_date(self):
+            '''
+            传入时间的该月首日
+            :return:
+            '''
+            # 注意气象数据每个月的数据应该从上个月的最后一天到本月的最后一天
+            '''
+                eg:
+                    10月31日 21点——11月30日20点
+            '''
+            start_datetime = datetime(self.start_date.year, self.start_date.month, 1,21,0)
+            # 上个月的最后一天为起始时间
+            start_datetime=start_datetime.timedelta(-1)
+            return start_datetime
+
+        @property
+        def monthlastday_date(self):
+            '''
+            传入时间的该月最后一日
+            :return:
+            '''
+            end_datetime = pd.date_range(self.start_date, periods=1, freq='M')[0]
+
+            end_datetime = datetime(end_datetime.year, end_datetime.month, end_datetime.day, 20, 00)
+            # end_datetime = parse(str(end_datetime))
+            return end_datetime
+
+        @property
+        def list_date(self):
+            '''
+            获取日期时间列表
+            00-23时
+            :return:
+            '''
+            if self.__list_date is None:
+                self.__list_date = pd.date_range(self.start_date, periods=24, freq='H')
+            return self.__list_date
+
+        @property
+        def list_date_allmonth(self):
+            '''
+            获取日期时间列表
+            当月1日00：00-月底最后一日23:59
+            :return:
+            '''
+            if self.__list_date_allmonth is None:
+                self.__list_date_allmonth=pd.date_range(self.monthstartday, self.monthendday, freq='H')
+                # self.__list_date_allmonth = pd.date_range(self.monthfirstday_date, self.monthlastday_date, freq='H')
+            return self.__list_date_allmonth
 
     class Hydrology_date:
         '''
