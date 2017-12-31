@@ -24,11 +24,73 @@ from data import model
 re_match=[r'^WL\d{4}.\d{5}$',r'^WS\d{4}.\d{5}$',r'^WV\d{4}.\d{5}$']
 
 class ReadTimeData:
-    '''
+    """
+    读取分钟文件
     by zhiw
-    '''
+    """
+
     def __init__(self):
-        pass
+        """
+        缺少时间转换还有模块测试
+        """
+        self.table_index = 'DT,WT,SL,WL,DT1,AT,BP,HU,RN,WS1,WS2,WS3,WS4,WS5,WS6,WS7,WS8,WS9,WS10'.split(',')
+        # 默认的实时数据路径
+        self.default_data_path = '../data/xxx/realtime/'
+
+    @property
+    def GetFolderFile(self, folderpath):
+        """
+        获取指定路径中所有文件相对路径
+        """
+        file_pathes = []
+        for root, dirs, files in os.walk(folderpath, topdown=False):
+            if (len(files) != 0):
+                for name in files:
+                    file_pathes.append(root + '/' + name)
+        return file_pathes
+
+    @property
+    def GetFileData(self, filePathList):
+        """
+        读取txt文件并转换为dataframe，暂时先转换成lst
+        """
+        lst, errlst = [], []
+        reg_removehead = re.compile('[A-Z]*?[\s]+')
+        reg_removeenter = re.compile('\n')
+        for singleFile in filePathList:
+            try:
+                with open(singleFile) as txt:
+                    result = txt.read()
+                    result = reg_removeenter.sub('', result)  # 移除换行
+                    result = reg_removehead.sub(' ', result)  # 移除标题等待重新指定
+                    result = result.lstrip(' ')
+                    tempdf = pd.read_csv(StringIO(result), delimiter='\s', header=None, names=self.table_index,
+                                         engine='python')
+                    tempdf.columns = self.table_index
+                    lst.append(tempdf)
+            except Exception as err:
+                errlst.append(err)
+        return (lst, errlst)
+
+    def GetCombinedDfByPathes(self, filePathList):
+        """
+            根据文件的绝对路径获取合并后的dataframe还有报错的文件
+        """
+        dflst, errlst = self.GetFileData(filePathList)
+        print('获取数据', len(dflst), '行,因错误失去数据', len(errlst))
+        if (len(dflst) > 1):
+            temp = dflst[0]
+            for i in range(1, len(dflst)):
+                temp = temp.append(dflst[i], ignore_index=True)
+            return (temp, errlst)
+        else:
+            return (dflst, errlst)
+
+    def BuildDataByFilePath(self, filepath):
+        """根据一个实时的数据路径获取整个文件夹内的dataframe,不过不包含有问题的文件"""
+        inside_filepathes = self.GetFolderFile(filepath)
+        file_dataframe, errlst = self.GetCombinedDfByPathes(inside_filepathes)
+        return file_dataframe, errlst
 
 class Station:
     '''
